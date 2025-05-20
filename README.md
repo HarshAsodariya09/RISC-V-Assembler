@@ -1,61 +1,240 @@
-# CS204 - Phase 1: RISC-V Assembler
+# CS204 Final Project: RISC-V Assembler and Simulator
 
-##  Introduction
+## Table of Contents
 
-This repository contains the source code and documentation for a **simple assembler** developed in **C++**.  
-The assembler translates **assembly language code** into **machine code** for a **32-bit RISC-V ISA**.
+1. [Project Overview](#project-overview)
+2. [Repository Structure](#repository-structure)
+3. [Detailed File Descriptions](#detailed-file-descriptions)
 
-### Key Features:
-- **Handles file input/output** for processing assembly code.
-- **Supports six instruction formats**: **I, R, S, SB, J, and UJ**.
-- **Identifies 31 valid RISC-V instructions**.
-- **Ignores or reports errors** for invalid instructions.
+   * [Assembler Components](#assembler-components)
+   * [Simulation Utilities](#simulation-utilities)
+   * [Graphical Interface](#graphical-interface)
+   * [Configuration and Metadata](#configuration-and-metadata)
+4. [Build and Installation](#build-and-installation)
+5. [Usage Instructions](#usage-instructions)
 
-This project consists of **one main file (`code.cpp`)** and **seven separate header files** for instruction handling.
+   * [Assembling Source Code](#assembling-source-code)
+   * [Running the Simulator](#running-the-simulator)
+   * [Viewing Memory/Register Dumps](#viewing-memoryregister-dumps)
+   * [Launching the GUI Simulator](#launching-the-gui-simulator)
+6. [Outputs and Logs](#outputs-and-logs)
+7. [Contributing](#contributing)
+8. [License](#license)
+
+---
+
+## Project Overview
+
+This repository implements a **simple assembler** and **cycle-accurate simulator** for a 32-bit RISC-V instruction set. Written primarily in **C++**, with a **Python/Flask** frontend for graphical simulation, the project:
+
+* Translates RISC-V assembly (32-bit) into machine code.
+* Supports six primary instruction formats: **R**, **I**, **S**, **SB**, **U**, and **J**.
+* Implements a one-bit branch predictor and basic pipeline knobs.
+* Performs cycle-accurate simulation, producing register and memory dumps.
+* Provides a web-based GUI for toggling pipeline features and visualizing state.
 
 ---
 
-##  Instruction Formats
+## Repository Structure
 
-| **Format** | **Type** |
-|-----------|---------|
-| **I** | Immediate instructions (e.g., `addi x1, x2, 10`) |
-| **R** | Register instructions (e.g., `add x1, x2, x3`) |
-| **S** | Store instructions (e.g., `sw x5, 4(x6)`) |
-| **SB** | Branch instructions with signed offset (e.g., `beq x1, x2, label`) |
-| **J** | Jump instructions (e.g., `jal x1, fact`) |
-| **UJ** | Jump instructions with immediate values (e.g., `jal x1, label`) |
+```
+CS204-Final/
+├── code.cpp                 # Core assembler implementation
+├── main.cpp                 # Frontend driver for assembly process
+├── simulate_and_dump.cpp    # Simulator that runs assembled code and dumps state
+├── gui_simulator.py         # Flask app for web-based simulator
+├── header files (.h)        # Instruction-format definitions (I.h, R.h, S.h, SB.h, U.h, J.h)
+├── Utils.h                  # Common utilities (binary conversion, memory/register definitions)
+├── input.asm                # Sample assembly source
+├── output.mc                # Assembled machine code output
+├── input.mc                 # Machine code input for simulator
+├── register.txt             # Register state output log
+├── memory.txt               # Memory state output log
+├── stats.txt                # Simulation statistics (cycles, hazards)
+├── .vscode/                 # VSCode configuration files
+├── *.exe                    # Compiled binaries (platform-specific)
+└── README.md                # (This) documentation
+```
 
-Additional utils.h for extra and common functions
 ---
 
-##  Language Used
-- **C++**
+## Detailed File Descriptions
+
+### Assembler Components
+
+* **`code.cpp`**
+
+  * Implements parsing of assembly lines, label resolution, and instruction encoding.
+  * Integrates format-specific classes (`R`, `I`, `S`, `SB`, `U`, `J`) for binary translation.
+  * Maintains label-to-address maps for both data and instruction sections.
+  * Performs one-bit branch prediction table initialization.
+
+* **`main.cpp`**
+
+  * Orchestrates file I/O: reads `.asm`, invokes assembler routines, writes `.mc` output.
+  * Handles error reporting for invalid instructions or labels.
+  * Uses `Utils.h` for auxiliary functions.
+
+* **Instruction Format Headers (`I.h`, `R.h`, `S.h`, `SB.h`, `U.h`, `J.h`)**
+
+  * Define classes or functions to encode each RISC-V format:
+
+    * **R-format**: register-register arithmetic/logical.
+    * **I-format**: immediate operations and loads.
+    * **S-format**: store instructions.
+    * **SB-format**: conditional branches.
+    * **U-format**: upper immediate instructions (LUI/AUIPC).
+    * **J-format**: jump instructions (JAL).
+  * Each header provides bit-field assembly into 32-bit instruction words.
+
+* **`Utils.h`**
+
+  * Contains utility functions for:
+
+    * Decimal-to-binary string conversion (sign extension)
+    * Binary-to-integer conversion
+    * Global extern maps for `registers` and `execMemory` used in simulation.
+
+### Simulation Utilities
+
+* **`simulate_and_dump.cpp`**
+
+  * Performs cycle-accurate simulation of the assembled machine code.
+  * Uses global `registers` map to model 32 general-purpose registers.
+  * Reads `input.mc`, executes instructions, updates `execMemory` and `registers`.
+  * Dumps final register state to `register.txt` and memory state to `memory.txt`.
+  * Records simulation metrics (e.g., total cycles, data hazards) into `stats.txt`.
+
+* **`input.mc`**
+
+  * Machine code input file, typically generated by running the assembler.
+
+* **`memory.txt`** & **`register.txt`**
+
+  * Text logs capturing post-simulation memory contents and register values.
+
+* **`stats.txt`**
+
+  * Summarizes simulation statistics:
+
+    * Total clock cycles
+    * Number of pipeline stalls and hazards
+    * Branch predictor accuracy
+
+### Graphical Interface
+
+* **`gui_simulator.py`**
+
+  * Flask-based web application providing a GUI front-end.
+  * Offers user `knobs` to enable/disable features such as:
+
+    * Pipelining
+    * Data forwarding
+    * Register/state freezes
+    * Branch prediction
+  * Reads `register.txt` and `memory.txt` to display current state in browser.
+  * Invokes simulation executable as subprocess and refreshes views.
+
+### Configuration and Metadata
+
+* **`.vscode/`**
+
+  * VSCode settings for consistent development environment:
+
+    * Include paths for C++ compilation
+    * Debugging configurations
+
+* **Compiled Binaries (`*.exe`)**
+
+  * Pre-built executables for Windows:
+
+    * `code.exe`, `simulate_and_dump.exe`, and variants.
+  * Provided for quick testing; recommended to rebuild on your platform.
 
 ---
-##  Usage
 
-### **1️ Setup the Assembler**
-- Ensure your assembly language code is stored in a text file named **`assembly_code.asm`**.
-- Include the following **header files** in the same directory:
-- Place **`code.cpp`** in the same directory.
+## Build and Installation
 
-### **2️ Compile the Assembler**
-g++ code.cpp -o assembler
-./assembler
+1. **Prerequisites**:
 
-### **Verification**
-To verify your machine code , you can use "Venus Simulator" and match it with the machine code generated by simulator. It should match the code generated in 'ans.mc' file.
-###** Assumption**
-1. The .data: attribute has to be in a separate line.
-2. The .text: attribute should also be in a separate line.
-3. Label should be in different line than instruction.
-4. There would not be any instructions in front of a label; instructions should be on the next line after the label.
-5. The instruction can have spaces in between registers.
-6. If any unspecified instruction is given, the code will ignore that instruction.
+   * C++17 (or higher) compiler (e.g., `g++`, `clang++`).
+   * Python 3.x with Flask.
+2. **Clone the repository**:
 
-This Project is contributed by-
-  
-## Lakshay Kumar 2023CSB1132
-## Harsh Asodariya 2023CSB1103
-## Vivaan Garg 2023CSB1173
+   ```bash
+   git clone https://github.com/yourusername/CS204-Final.git
+   cd CS204-Final
+   ```
+3. **Compile the assembler and simulator**:
+
+   ```bash
+   g++ -std=c++17 -O2 code.cpp -o assembler
+   g++ -std=c++17 -O2 simulate_and_dump.cpp -o simulator
+   ```
+4. **Install Python dependencies**:
+
+   ```bash
+   pip install flask
+   ```
+
+---
+
+## Usage Instructions
+
+### Assembling Source Code
+
+```bash
+./assembler input.asm output.mc
+```
+
+* `input.asm`: RISC-V assembly file.
+* `output.mc`: Generated machine code.
+
+### Running the Simulator
+
+```bash
+./simulator output.mc
+```
+
+* Produces `register.txt`, `memory.txt`, and `stats.txt` in working directory.
+
+### Viewing Memory/Register Dumps
+
+* Open `register.txt` and `memory.txt` in any text editor to inspect state.
+* Check `stats.txt` for cycle and hazard information.
+
+### Launching the GUI Simulator
+
+```bash
+python gui_simulator.py
+```
+
+* Access the GUI at `http://127.0.0.1:5000/`.
+* Toggle pipeline features and re-run simulation to see effects.
+
+---
+
+## Outputs and Logs
+
+* **`output.mc`**: Binary representation (in text) of assembled instructions.
+* **`register.txt`**: Final register file dump:
+
+  ```text
+  x0: 0x00000000
+  x1: 0x00000005
+  ...
+  ```
+* **`memory.txt`**: Memory addresses and contents after execution.
+* **`stats.txt`**: Simulation summary metrics.
+
+---
+
+## Contributing
+
+Contributions welcome! Please fork the repository and submit pull requests. For major changes, open an issue first to discuss proposed improvements.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). Feel free to use and modify freely.
