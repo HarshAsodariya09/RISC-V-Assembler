@@ -1,0 +1,12 @@
+Stat1: Total Cycles = 11
+Stat2: Total Instructions Executed = 3
+Stat3: CPI = 3.67
+Stat4: Data-transfer Instructions = 1
+Stat5: ALU Instructions = 1
+Stat6: Control Instructions = 1
+Stat7: Total Stalls/Bubbles = 0
+Stat8: Data Hazards = 0
+Stat9: Control Hazards = 0
+Stat10: Branch Mispredictions = 0
+Stat11: Stalls due to Data Hazards = 0
+Stat12: Stalls due to Control Hazards = 0
