@@ -19,7 +19,6 @@
    * [Launching the GUI Simulator](#launching-the-gui-simulator)
 6. [Outputs and Logs](#outputs-and-logs)
 7. [Contributing](#contributing)
-8. [License](#license)
 
 ---
 
@@ -235,6 +234,3 @@ Contributions welcome! Please fork the repository and submit pull requests. For 
 
 ---
 
-## License
-
-This project is licensed under the [MIT License](LICENSE). Feel free to use and modify freely.
